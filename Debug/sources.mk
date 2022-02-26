@@ -23,6 +23,7 @@ SUBDIRS := \
 Button \
 Buzzer \
 Dio \
+Glcd \
 LCD \
 LED \
 SSD \
