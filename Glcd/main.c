@@ -115,6 +115,28 @@ void direction(dir d)
 		Command_Port &= ~(1 << CS2);
 	}
 }
+void clearline(axis a, int x, int y, int n, dir d)
+{
+	direction(d);
+		switch(a)
+		{
+		case h:
+			break;
+		case vdown:
+			GLCD_Command((0xB8) + y);
+			GLCD_Command((0x40) + x);
+			break;
+		case vup:
+			GLCD_Command((0xB8) + y + 1);
+			GLCD_Command((0x40) + x);
+			break;
+		}
+	for (int j = 0; j < n; j++)
+	{
+		GLCD_Data(0);
+	}
+	GLCD_Command(0x40);
+}
 
 void cursor_place(int x, int y, dir d)
 {
@@ -201,33 +223,32 @@ void GLCD_String(char page_no, char *str) /* GLCD string write function */
 }
 
 
-int line(axis a, int x, int y)
+int line(axis a, int x, int y, int n, dir d)
 {
 	int moves = 0;
-
+	direction(d);
 	GLCD_Command((0xB8) + y);
 	GLCD_Command((0x40) + x);
+	for(int i = 0; i < n; i++)
 	switch(a)
 	{
 	case h:
 		GLCD_Data(0xff);
 		GLCD_Command((0x40) + x);
-		GLCD_Command((0xB8)+ y  + 1);
 		GLCD_Data(0xff);
 		GLCD_Command((0xB8)+ y);
 		moves++;
 		break;
-	case vup:
-		moves++;
-		GLCD_Command((0xB8)+ y  + 1);
-		GLCD_Data(0x80);
-		GLCD_Command((0xB8)+ y);
-		break;
 	case vdown:
 		moves++;
-		GLCD_Data(0x1);
+		GLCD_Data(0x80);
+		break;
+	case vup:
+		moves++;
+		GLCD_Data(0x01);
 		break;
 	}
+	GLCD_Command(0x40);
 	return moves;
 }
 
@@ -247,12 +268,52 @@ char* get_firstline(int f, int cycle, char* space)
     strcat(firstLine, "%");
     return firstLine;
 }
+void draw_line(int f, int cycle)
+{
+	char l = 120;
+	char moves = 0;
+	dir d = left;
+	char r = 128;
+	if(cycle == 100)
+	{
+		line(vup, 0, 3, 64, d);
+		d = !d;
+		line(vup, 0, 3, 64, d);
+	}
+	else if(cycle == 0)
+	{
+		line(vdown, 0, 5, 64, d);
+		d = !d;
+		line(vdown, 0, 5, 64, d);
+	}
+	else
+	{
+		moves += line(h, 0, 4, 1, d);
+		r = r - moves;
+		if(r - l <= 64)
+		{
+			r = r - l;
+			l = 64 - moves;
+			line(vup, moves, 3, l, d);
+			d = !d;
+			moves = 0;
+			line(vup, moves, 3, r, d);
+		}
+		else
+		{
+			line(vup, moves, 3, l, d);
+		}
+	}
+}
 
 int main(void)
 {
-    int f = 0;
-    int cycle = 0;
-
+	char breaks = 2;
+	char cap = 128 - breaks;
+    int f = 16;
+    int cycle = 50;
+    int x = 90;
+    int move = 0;
     char space[20] = "    ";
     char firstLine[128];
 
@@ -263,6 +324,11 @@ int main(void)
         strcat(' ', ' ');
     	strcpy(firstLine, get_firstline(f, cycle, space));
     	GLCD_String(0, firstLine); /* Print String on 0th page of display */
-    	GLCD_String(5, "-------------------");
+
+		line(vup, 0, 3, 8, left);
+		line(vdown, 8, 3, 8, left);
+		line(vup, 16, 3, 8, left);
+		line(vdown, 24, 3, 8, left);
+
     }
 }
