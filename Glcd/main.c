@@ -9,7 +9,9 @@
 #include <stdio.h>      /* Include standard i/o library file */
 #include "Font_Header.h"
 #include <string.h>
-
+#include "Bit_Math.h"
+#include "Dio.h"
+#include<math.h>
 #define Data_Port PORTA       /* Define data port for GLCD */
 #define Command_Port PORTC    /* Define command port for GLCD */
 #define Data_Port_Dir DDRA    /* Define data port for GLCD */
@@ -234,9 +236,6 @@ int line(axis a, int x, int y, int n, dir d)
 	{
 	case h:
 		GLCD_Data(0xff);
-		GLCD_Command((0x40) + x);
-		GLCD_Data(0xff);
-		GLCD_Command((0xB8)+ y);
 		moves++;
 		break;
 	case vdown:
@@ -261,7 +260,7 @@ char* get_firstline(int f, int cycle, char* space)
 	char firstLine[128] = "";
     strcat(firstLine, "F:");
     strcat(firstLine, fstr);
-    strcat(firstLine, " KHz");
+    strcat(firstLine, "KHz");
     strcat(firstLine, space);
     strcat(firstLine, "Duty:");
     strcat(firstLine, cyclestr);
@@ -270,6 +269,12 @@ char* get_firstline(int f, int cycle, char* space)
 }
 void draw_line(int f, int cycle)
 {
+	float part = 0.30;
+	int uppixels = ceil(part * cycle);
+	int downpixels = floor(part * (100 - cycle));
+	if(cycle == 50)
+		downpixels --;
+	int n_of_cycles = 4;
 	char l = 120;
 	char moves = 0;
 	dir d = left;
@@ -288,21 +293,35 @@ void draw_line(int f, int cycle)
 	}
 	else
 	{
-		moves += line(h, 0, 4, 1, d);
 		r = r - moves;
+		for(int i = 0; i < n_of_cycles; i++)
+		{
+			moves = 0;
+			moves += line(h, moves, 4, 1, d);
+			moves += line(vup, moves, 4, uppixels, d);
+			moves += line(h, moves, 4, 1, d);
+			moves += line(vdown, moves, 4, downpixels, d);
+			moves += line(h, moves, 4, 1, d);
+			moves += line(vup, moves, 4, uppixels, d);
+			moves += line(h, moves, 4, 1, d);
+			moves += line(vdown, moves, 4, downpixels, d);
+			d = !d;
+		}
+/* CODE TO CHECK LEFT AND TO KNOW AND SWITCH TO THE LEFT OF THE SCREEN
 		if(r - l <= 64)
 		{
 			r = r - l;
 			l = 64 - moves;
-			line(vup, moves, 3, l, d);
+			line(vup, moves, 4, l, d);
 			d = !d;
 			moves = 0;
-			line(vup, moves, 3, r, d);
+			line(vup, moves, 4, r, d);
 		}
 		else
 		{
-			line(vup, moves, 3, l, d);
+			line(vup, moves, 4, l, d);
 		}
+*/
 	}
 }
 
@@ -325,10 +344,7 @@ int main(void)
     	strcpy(firstLine, get_firstline(f, cycle, space));
     	GLCD_String(0, firstLine); /* Print String on 0th page of display */
 
-		line(vup, 0, 3, 8, left);
-		line(vdown, 8, 3, 8, left);
-		line(vup, 16, 3, 8, left);
-		line(vdown, 24, 3, 8, left);
+    	draw_line(f, cycle);
 
     }
 }
