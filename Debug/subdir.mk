@@ -4,16 +4,22 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../Glcd.c \
 ../Timer0.c \
-../main.c 
+../main.c \
+../pwm.c 
 
 OBJS += \
+./Glcd.o \
 ./Timer0.o \
-./main.o 
+./main.o \
+./pwm.o 
 
 C_DEPS += \
+./Glcd.d \
 ./Timer0.d \
-./main.d 
+./main.d \
+./pwm.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
