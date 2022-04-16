@@ -11,6 +11,7 @@ RM := rm -rf
 -include SSD/subdir.mk
 -include LED/subdir.mk
 -include LCD/subdir.mk
+-include Glcd/subdir.mk
 -include Dio/subdir.mk
 -include Buzzer/subdir.mk
 -include Button/subdir.mk
